@@ -3,49 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Z CAM 证书生成器</title>
+    <title>雷特经销商授权证书制作 (2026)</title>
+    
     <style>
+        /* 全局样式：深色专业风格 */
         body { font-family: "Microsoft YaHei", sans-serif; background-color: #2b2b2b; color: #eee; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; height: 100vh; box-sizing: border-box; }
+        
+        /* 布局容器 */
         .main-container { display: flex; flex-direction: row; gap: 30px; width: 100%; max-width: 1400px; height: 100%; overflow: hidden; }
-        .controls { flex: 0 0 320px; background: #3a3a3a; padding: 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; height: fit-content; max-height: 90vh; }
-        .preview-area { flex: 1; background: #1f1f1f; border-radius: 12px; display: flex; align-items: center; justify-content: center; padding: 20px; border: 2px dashed #555; }
-        canvas { max-width: 100%; max-height: 100%; box-shadow: 0 0 20px rgba(0,0,0,0.5); object-fit: contain; }
-        .group { background: #444; padding: 12px; border-radius: 8px; border: 1px solid #555; }
-        .group-title { font-size: 14px; color: #aaa; margin-bottom: 8px; font-weight: bold; border-bottom: 1px solid #555; padding-bottom: 5px; }
-        label { display: block; font-size: 12px; color: #bbb; margin-top: 8px; }
-        input[type="text"] { width: 100%; padding: 8px; background: #222; border: 1px solid #555; color: white; border-radius: 4px; margin-top: 4px; box-sizing: border-box;}
-        input[type="range"] { width: 100%; margin: 5px 0; cursor: pointer; }
-        .btn-download { background: #d4af37; color: #222; font-weight: bold; padding: 15px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; width: 100%; margin-top: 10px; transition: 0.2s; }
-        .btn-download:hover { background: #c49f27; transform: scale(1.02); }
+        
+        /* 左侧控制栏 */
+        .controls { flex: 0 0 340px; background: #3a3a3a; padding: 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; height: fit-content; max-height: 90vh; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        
+        /* 右侧预览区 */
+        .preview-area { flex: 1; background: #1f1f1f; border-radius: 12px; display: flex; align-items: center; justify-content: center; padding: 20px; border: 2px dashed #555; position: relative; overflow: hidden; }
+        
+        /* 画布样式 */
+        canvas { max-width: 100%; max-height: 100%; box-shadow: 0 0 30px rgba(0,0,0,0.5); object-fit: contain; cursor: grab; transition: transform 0.1s; }
+        canvas:active { cursor: grabbing; transform: scale(0.99); }
+
+        /* 控件组通用样式 */
+        .group { background: #444; padding: 15px; border-radius: 8px; border: 1px solid #555; position: relative; }
+        .group-title { font-size: 14px; color: #d4af37; margin-bottom: 12px; font-weight: bold; border-bottom: 1px solid #555; padding-bottom: 8px; letter-spacing: 1px; }
+        
+        label { display: block; font-size: 12px; color: #bbb; margin-top: 10px; margin-bottom: 4px; }
+        input[type="text"] { width: 100%; padding: 8px; background: #222; border: 1px solid #555; color: white; border-radius: 4px; box-sizing: border-box; font-size: 14px; }
+        input[type="text"]:focus { border-color: #d4af37; outline: none; }
+        input[type="range"] { width: 100%; margin: 5px 0; cursor: pointer; accent-color: #d4af37; }
+
+        /* 模版网格 */
+        .template-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+        .template-item { cursor: pointer; border-radius: 6px; overflow: hidden; border: 2px solid transparent; position: relative; background: #222; height: 60px; }
+        .template-item img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0.6; transition: 0.2s; }
+        .template-item:hover { border-color: #888; }
+        .template-item:hover img { opacity: 0.9; }
+        
+        /* 选中状态 */
+        .template-item.active { border-color: #d4af37; box-shadow: 0 0 10px rgba(212, 175, 55, 0.4); }
+        .template-item.active img { opacity: 1; }
+        
+        .template-name { font-size: 10px; text-align: center; color: #fff; width: 100%; background: rgba(0,0,0,0.6); position: absolute; bottom: 0; padding: 2px 0; pointer-events: none;}
+
+        /* 按钮 */
+        .btn-download { background: linear-gradient(135deg, #d4af37 0%, #b48f27 100%); color: #111; font-weight: bold; padding: 15px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; width: 100%; margin-top: 5px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); transition: 0.2s; }
+        .btn-download:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.3); filter: brightness(1.1); }
+        .btn-download:active { transform: translateY(0); }
+
+        .btn-manual { background: transparent; border: 1px dashed #777; color: #aaa; width: 100%; padding: 8px; border-radius: 4px; cursor: pointer; text-align: center; font-size: 12px; margin-top: 10px; transition: 0.2s; }
+        .btn-manual:hover { border-color: #ccc; color: white; background: rgba(255,255,255,0.05); }
+
     </style>
 </head>
 <body>
 
     <div class="main-container">
         <div class="controls">
-            <h2 style="color:#d4af37; margin-top:0;">🏆 证书生成器</h2>
+            <h2 style="color:#d4af37; margin:0; text-align:center;">🏆 经销商授权证书制作工具</h2>
             
-            <div class="group">
-                <div class="group-title">公司名称设置</div>
-                <input type="text" id="companyInput" value="北京东元坤泰商贸有限责任公司">
-                <label>上下位置 (Y): <span id="val_cY">0</span></label>
-                <input type="range" id="companyY" min="0" max="2000" value="0">
-                <label>字号大小: <span id="val_cSize">45</span></label>
-                <input type="range" id="companySize" min="20" max="150" value="45">
+            <div class="group" style="border-color: #d4af37;">
+                <div class="group-title">1. 选择证书模版</div>
+                <div id="templateGrid" class="template-grid"></div>
+                
+                <label class="btn-manual" for="bgUploader">📂 上传其他模版...</label>
+                <input type="file" id="bgUploader" accept="image/*" style="display:none;">
             </div>
 
             <div class="group">
-                <div class="group-title">地区名称设置</div>
-                <input type="text" id="regionInput" value="北京">
-                <label>上下位置 (Y): <span id="val_rY">0</span></label>
-                <input type="range" id="regionY" min="0" max="2000" value="0">
-                <label>左右微调 (X): <span id="val_rX">0</span></label>
-                <input type="range" id="regionX" min="-300" max="300" value="-100">
-                <label>字号大小: <span id="val_rSize">42</span></label>
-                <input type="range" id="regionSize" min="20" max="150" value="42">
+                <div class="group-title">2. 编辑内容 (可直接拖拽预览图)</div>
+                
+                <label>公司/店铺名称</label>
+                <input type="text" id="cText" value="公司名称或者店铺名称">
+                
+                <div style="display:flex; gap:10px; margin-top:5px;">
+                    <div style="flex:1;">
+                        <label>上下位置</label>
+                        <input type="range" id="cY" min="0" max="2000" value="0">
+                    </div>
+                    <div style="flex:1;">
+                        <label>字体大小 <span id="val_cSize" style="color:#d4af37;">45</span></label>
+                        <input type="range" id="cSize" min="20" max="150" value="45">
+                    </div>
+                </div>
+
+                <hr style="border:0; border-top:1px dashed #555; margin: 15px 0;">
+
+                <label>线下地区/备注信息</label>
+                <input type="text" id="rText" value="北京">
+                
+                <div style="display:flex; gap:10px; margin-top:5px;">
+                    <div style="flex:1;">
+                        <label>上下位置</label>
+                        <input type="range" id="rY" min="0" max="2000" value="0">
+                    </div>
+                    <div style="flex:1;">
+                        <label>左右微调</label>
+                        <input type="range" id="rX" min="-300" max="300" value="-100">
+                    </div>
+                </div>
+                <label>字体大小 <span id="val_rSize" style="color:#d4af37;">42</span></label>
+                <input type="range" id="rSize" min="20" max="150" value="42">
             </div>
 
-            <button class="btn-download" onclick="downloadCert()">⬇️ 下载证书</button>
+            <button class="btn-download" onclick="downloadSingle()">⬇️ 下载证书图片</button>
         </div>
 
         <div class="preview-area">
@@ -54,74 +113,249 @@
     </div>
 
     <script>
+        // ==========================================
+        // 🛠️ 模版配置区 (请在此处确认图片文件名)
+        // ==========================================
+        const templates = [
+            {
+                name: "Z CAM 线上",
+                file: "./zcam_online.jpg",
+                config: { cY: 480, cSize: 45, rY: 615, rX: -106, rSize: 42 }
+            },
+            {
+                name: "Z CAM 线下",
+                file: "./zcam_offline.jpg",
+                config: { cY: 480, cSize: 45, rY: 615, rX: -106, rSize: 42 }
+            },
+            {
+                name: "ATOMOS 线上",
+                file: "./atomos_online.jpg",
+                config: { cY: 500, cSize: 45, rY: 630, rX: 0, rSize: 40 }
+            },
+            {
+                name: "ATOMOS 线下",
+                file: "./atomos_offline.jpg",
+                config: { cY: 500, cSize: 45, rY: 630, rX: 0, rSize: 40 }
+            },
+            {
+                name: "传奇雷鸣",
+                file: "./leiming.jpg",
+                config: { cY: 550, cSize: 50, rY: 700, rX: 0, rSize: 45 }
+            },
+            {
+                name: "EDIUS",
+                file: "./edius.jpg",
+                config: { cY: 480, cSize: 45, rY: 615, rX: 0, rSize: 42 }
+            },
+            {
+                name: "雷特字幕",
+                file: "./visitle.jpg",
+                config: { cY: 480, cSize: 45, rY: 615, rX: 0, rSize: 42 }
+            }
+        ];
+        // ==========================================
+
         const canvas = document.getElementById('certCanvas');
         const ctx = canvas.getContext('2d');
         const bgImage = new Image();
         
-        // --- 核心修改：自动加载同目录下的 bg.jpg ---
-        bgImage.src = './bg.jpg'; 
-        
+        // 状态管理
+        const state = {
+            company: { text: "", y: 0, size: 45, x: 0 },
+            region: { text: "", y: 0, size: 42, xOffset: -100 }
+        };
+
+        // DOM 元素引用
         const els = {
-            cText: document.getElementById('companyInput'),
-            cY: document.getElementById('companyY'),
-            cSize: document.getElementById('companySize'),
-            rText: document.getElementById('regionInput'),
-            rY: document.getElementById('regionY'),
-            rX: document.getElementById('regionX'),
-            rSize: document.getElementById('regionSize')
+            grid: document.getElementById('templateGrid'),
+            cText: document.getElementById('cText'), cY: document.getElementById('cY'), cSize: document.getElementById('cSize'),
+            rText: document.getElementById('rText'), rY: document.getElementById('rY'), rX: document.getElementById('rX'), rSize: document.getElementById('rSize'),
+            bgUploader: document.getElementById('bgUploader')
         };
 
-        bgImage.onload = () => {
-            canvas.width = bgImage.width;
-            canvas.height = bgImage.height;
-            
-            // 自动设置滑块最大值
-            els.cY.max = bgImage.height;
-            els.rY.max = bgImage.height;
+        // 1. 初始化程序
+        function init() {
+            // 生成模版列表
+            els.grid.innerHTML = "";
+            templates.forEach((tpl, index) => {
+                const div = document.createElement('div');
+                div.className = 'template-item';
+                div.title = tpl.name; // 鼠标悬停显示全名
+                div.onclick = () => loadTemplate(index);
 
-            // 预设位置 (根据你的图片比例)
-            els.cY.value = Math.floor(bgImage.height * 0.435);
-            els.rY.value = Math.floor(bgImage.height * 0.555);
-            
-            draw();
-        };
+                const img = document.createElement('img');
+                img.src = tpl.file;
+                // 默认占位图，防止图片未找到时太丑
+                img.onerror = () => { img.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='60' viewBox='0 0 100 60'%3E%3Crect width='100' height='60' fill='%23333'/%3E%3Ctext x='50' y='35' font-family='Arial' font-size='10' fill='%23666' text-anchor='middle'%3E图裂了%3C/text%3E%3C/svg%3E"; };
+                
+                const span = document.createElement('div');
+                span.className = 'template-name';
+                span.innerText = tpl.name;
 
+                div.appendChild(img);
+                div.appendChild(span);
+                els.grid.appendChild(div);
+            });
+
+            // 默认加载第一个
+            if(templates.length > 0) loadTemplate(0);
+        }
+
+        // 2. 加载模版
+        function loadTemplate(index) {
+            // 高亮选中项
+            const items = document.querySelectorAll('.template-item');
+            items.forEach(item => item.classList.remove('active'));
+            if(items[index]) items[index].classList.add('active');
+
+            const tpl = templates[index];
+            bgImage.src = tpl.file;
+            
+            // 应用配置
+            state.company.y = tpl.config.cY;
+            state.company.size = tpl.config.cSize;
+            state.region.y = tpl.config.rY;
+            state.region.xOffset = tpl.config.rX;
+            state.region.size = tpl.config.rSize;
+            
+            bgImage.onload = () => {
+                canvas.width = bgImage.width;
+                canvas.height = bgImage.height;
+                // 更新滑块最大值
+                els.cY.max = bgImage.height;
+                els.rY.max = bgImage.height;
+                syncStateToUI();
+                draw();
+            };
+        }
+
+        // 手动上传逻辑
+        els.bgUploader.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                bgImage.src = event.target.result;
+                document.querySelectorAll('.template-item').forEach(i => i.classList.remove('active')); // 清除高亮
+                bgImage.onload = () => {
+                     canvas.width = bgImage.width;
+                     canvas.height = bgImage.height;
+                     els.cY.max = bgImage.height;
+                     els.rY.max = bgImage.height;
+                     draw();
+                }
+            }
+            reader.readAsDataURL(file);
+        });
+
+        // 3. 核心绘图
         function draw() {
+            if (!bgImage.complete || bgImage.naturalWidth === 0) return;
+            
+            // 清空
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            // 画背景
             ctx.drawImage(bgImage, 0, 0);
-
-            ctx.fillStyle = '#1a1a1a'; // 接近黑色
+            
+            // 通用文字设置
+            ctx.fillStyle = '#1a1a1a'; // 接近黑色的深灰，更有质感
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
 
-            // 公司
-            ctx.font = `bold ${els.cSize.value}px "SimHei", "Microsoft YaHei", sans-serif`;
-            ctx.fillText(els.cText.value, canvas.width / 2, parseInt(els.cY.value));
+            // 画公司
+            ctx.font = `bold ${state.company.size}px "SimHei", "Microsoft YaHei", sans-serif`;
+            ctx.fillText(state.company.text, canvas.width / 2, state.company.y);
 
-            // 地区
-            ctx.font = `bold ${els.rSize.value}px "SimHei", "Microsoft YaHei", sans-serif`;
-            const centerX = canvas.width / 2;
-            const offsetX = parseInt(els.rX.value);
-            ctx.fillText(els.rText.value, centerX + offsetX, parseInt(els.rY.value));
-
-            // 更新数字
-            document.getElementById('val_cY').innerText = els.cY.value;
-            document.getElementById('val_cSize').innerText = els.cSize.value;
-            document.getElementById('val_rY').innerText = els.rY.value;
-            document.getElementById('val_rX').innerText = els.rX.value;
-            document.getElementById('val_rSize').innerText = els.rSize.value;
+            // 画地区
+            ctx.font = `bold ${state.region.size}px "SimHei", "Microsoft YaHei", sans-serif`;
+            ctx.fillText(state.region.text, (canvas.width / 2) + state.region.xOffset, state.region.y);
         }
 
-        function downloadCert() {
+        // 4. 交互逻辑
+        function handleUIChange() {
+            state.company.text = els.cText.value;
+            state.company.y = parseInt(els.cY.value);
+            state.company.size = parseInt(els.cSize.value);
+            state.region.text = els.rText.value;
+            state.region.y = parseInt(els.rY.value);
+            state.region.xOffset = parseInt(els.rX.value);
+            state.region.size = parseInt(els.rSize.value);
+            
+            // 更新数字显示
+            document.getElementById('val_cSize').innerText = els.cSize.value;
+            document.getElementById('val_rSize').innerText = els.rSize.value;
+            
+            draw();
+        }
+
+        function syncStateToUI() {
+            els.cText.value = state.company.text;
+            els.cY.value = state.company.y;
+            els.cSize.value = state.company.size;
+            els.rText.value = state.region.text;
+            els.rY.value = state.region.y;
+            els.rX.value = state.region.xOffset;
+            els.rSize.value = state.region.size;
+            handleUIChange();
+        }
+
+        // 5. 鼠标拖拽逻辑
+        let isDragging = false;
+        let dragTarget = null; 
+
+        function getCanvasPos(evt) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            return { x: (evt.clientX - rect.left) * scaleX, y: (evt.clientY - rect.top) * scaleY };
+        }
+
+        canvas.addEventListener('mousedown', (e) => {
+            const pos = getCanvasPos(e);
+            // 简单的点击检测 (Y轴 +- 40像素范围)
+            if (Math.abs(pos.y - state.company.y) < 40) { 
+                isDragging = true; 
+                dragTarget = 'company'; 
+            } else if (Math.abs(pos.y - state.region.y) < 40) { 
+                isDragging = true; 
+                dragTarget = 'region'; 
+            }
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDragging || !dragTarget) return;
+            const pos = getCanvasPos(e);
+
+            if (dragTarget === 'company') { 
+                state.company.y = Math.floor(pos.y); 
+            } else if (dragTarget === 'region') { 
+                state.region.y = Math.floor(pos.y); 
+                state.region.xOffset = Math.floor(pos.x - (canvas.width / 2)); 
+            }
+            syncStateToUI(); // 实时更新界面
+        });
+
+        window.addEventListener('mouseup', () => { isDragging = false; dragTarget = null; });
+        window.addEventListener('mouseout', () => { isDragging = false; dragTarget = null; });
+
+        // 6. 下载功能
+        function downloadSingle() {
+            if (!bgImage.complete || bgImage.naturalWidth === 0) { alert("没有图片内容！"); return; }
+            
+            // 使用最原始的下载方式，兼容性最好
             const link = document.createElement('a');
-            link.download = `ZCAM授权_${els.cText.value}.png`;
+            const safeName = els.cText.value.replace(/[\\/:*?"<>|]/g, "_"); // 去掉非法字符
+            link.download = `证书_${safeName}.png`;
             link.href = canvas.toDataURL("image/png");
             link.click();
         }
 
-        const inputs = [els.cText, els.cY, els.cSize, els.rText, els.rY, els.rX, els.rSize];
-        inputs.forEach(el => el.addEventListener('input', draw));
-        window.addEventListener('resize', draw);
+        // 绑定事件
+        [els.cText, els.cY, els.cSize, els.rText, els.rY, els.rX, els.rSize].forEach(el => el.addEventListener('input', handleUIChange));
+        
+        // 启动
+        init();
+
     </script>
 </body>
 </html>
