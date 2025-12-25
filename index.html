@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Z CAM 证书生成器</title>
+    <style>
+        body { font-family: "Microsoft YaHei", sans-serif; background-color: #2b2b2b; color: #eee; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; height: 100vh; box-sizing: border-box; }
+        .main-container { display: flex; flex-direction: row; gap: 30px; width: 100%; max-width: 1400px; height: 100%; overflow: hidden; }
+        .controls { flex: 0 0 320px; background: #3a3a3a; padding: 20px; border-radius: 12px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; height: fit-content; max-height: 90vh; }
+        .preview-area { flex: 1; background: #1f1f1f; border-radius: 12px; display: flex; align-items: center; justify-content: center; padding: 20px; border: 2px dashed #555; }
+        canvas { max-width: 100%; max-height: 100%; box-shadow: 0 0 20px rgba(0,0,0,0.5); object-fit: contain; }
+        .group { background: #444; padding: 12px; border-radius: 8px; border: 1px solid #555; }
+        .group-title { font-size: 14px; color: #aaa; margin-bottom: 8px; font-weight: bold; border-bottom: 1px solid #555; padding-bottom: 5px; }
+        label { display: block; font-size: 12px; color: #bbb; margin-top: 8px; }
+        input[type="text"] { width: 100%; padding: 8px; background: #222; border: 1px solid #555; color: white; border-radius: 4px; margin-top: 4px; box-sizing: border-box;}
+        input[type="range"] { width: 100%; margin: 5px 0; cursor: pointer; }
+        .btn-download { background: #d4af37; color: #222; font-weight: bold; padding: 15px; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; width: 100%; margin-top: 10px; transition: 0.2s; }
+        .btn-download:hover { background: #c49f27; transform: scale(1.02); }
+    </style>
+</head>
+<body>
+
+    <div class="main-container">
+        <div class="controls">
+            <h2 style="color:#d4af37; margin-top:0;">🏆 证书生成器</h2>
+            
+            <div class="group">
+                <div class="group-title">公司名称设置</div>
+                <input type="text" id="companyInput" value="北京东元坤泰商贸有限责任公司">
+                <label>上下位置 (Y): <span id="val_cY">0</span></label>
+                <input type="range" id="companyY" min="0" max="2000" value="0">
+                <label>字号大小: <span id="val_cSize">45</span></label>
+                <input type="range" id="companySize" min="20" max="150" value="45">
+            </div>
+
+            <div class="group">
+                <div class="group-title">地区名称设置</div>
+                <input type="text" id="regionInput" value="北京">
+                <label>上下位置 (Y): <span id="val_rY">0</span></label>
+                <input type="range" id="regionY" min="0" max="2000" value="0">
+                <label>左右微调 (X): <span id="val_rX">0</span></label>
+                <input type="range" id="regionX" min="-300" max="300" value="-100">
+                <label>字号大小: <span id="val_rSize">42</span></label>
+                <input type="range" id="regionSize" min="20" max="150" value="42">
+            </div>
+
+            <button class="btn-download" onclick="downloadCert()">⬇️ 下载证书</button>
+        </div>
+
+        <div class="preview-area">
+            <canvas id="certCanvas"></canvas>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('certCanvas');
+        const ctx = canvas.getContext('2d');
+        const bgImage = new Image();
+        
+        // --- 核心修改：自动加载同目录下的 bg.jpg ---
+        bgImage.src = './bg.jpg'; 
+        
+        const els = {
+            cText: document.getElementById('companyInput'),
+            cY: document.getElementById('companyY'),
+            cSize: document.getElementById('companySize'),
+            rText: document.getElementById('regionInput'),
+            rY: document.getElementById('regionY'),
+            rX: document.getElementById('regionX'),
+            rSize: document.getElementById('regionSize')
+        };
+
+        bgImage.onload = () => {
+            canvas.width = bgImage.width;
+            canvas.height = bgImage.height;
+            
+            // 自动设置滑块最大值
+            els.cY.max = bgImage.height;
+            els.rY.max = bgImage.height;
+
+            // 预设位置 (根据你的图片比例)
+            els.cY.value = Math.floor(bgImage.height * 0.435);
+            els.rY.value = Math.floor(bgImage.height * 0.555);
+            
+            draw();
+        };
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.drawImage(bgImage, 0, 0);
+
+            ctx.fillStyle = '#1a1a1a'; // 接近黑色
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            // 公司
+            ctx.font = `bold ${els.cSize.value}px "SimHei", "Microsoft YaHei", sans-serif`;
+            ctx.fillText(els.cText.value, canvas.width / 2, parseInt(els.cY.value));
+
+            // 地区
+            ctx.font = `bold ${els.rSize.value}px "SimHei", "Microsoft YaHei", sans-serif`;
+            const centerX = canvas.width / 2;
+            const offsetX = parseInt(els.rX.value);
+            ctx.fillText(els.rText.value, centerX + offsetX, parseInt(els.rY.value));
+
+            // 更新数字
+            document.getElementById('val_cY').innerText = els.cY.value;
+            document.getElementById('val_cSize').innerText = els.cSize.value;
+            document.getElementById('val_rY').innerText = els.rY.value;
+            document.getElementById('val_rX').innerText = els.rX.value;
+            document.getElementById('val_rSize').innerText = els.rSize.value;
+        }
+
+        function downloadCert() {
+            const link = document.createElement('a');
+            link.download = `ZCAM授权_${els.cText.value}.png`;
+            link.href = canvas.toDataURL("image/png");
+            link.click();
+        }
+
+        const inputs = [els.cText, els.cY, els.cSize, els.rText, els.rY, els.rX, els.rSize];
+        inputs.forEach(el => el.addEventListener('input', draw));
+        window.addEventListener('resize', draw);
+    </script>
+</body>
+</html>
